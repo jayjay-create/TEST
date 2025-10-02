@@ -151,12 +151,23 @@ AVAILABLE_TOOLS = [
     {
         "type": "function",
         "function": {
-            "name": "calculate_coverage",
-            "description": "Berechnet die aktuelle Abdeckung der Obligations für diese Practice",
+            "name": "next_obligation",
+            "description": "Markiert aktuelle Obligation als erfüllt (mit Coverage) und geht zur nächsten",
             "parameters": {
                 "type": "object",
-                "properties": {},
-                "required": []
+                "properties": {
+                    "coverage_percent": {
+                        "type": "number",
+                        "description": "Abdeckungsgrad 0-100",
+                        "minimum": 0,
+                        "maximum": 100
+                    },
+                    "reasoning": {
+                        "type": "string",
+                        "description": "Begründung warum Obligation erfüllt ist"
+                    }
+                },
+                "required": ["coverage_percent", "reasoning"]
             }
         }
     },
@@ -164,7 +175,7 @@ AVAILABLE_TOOLS = [
         "type": "function",
         "function": {
             "name": "skip_to_next",
-            "description": "Überspringt die aktuelle Obligation und geht zur nächsten",
+            "description": "Überspringt die aktuelle Obligation OHNE Coverage (User kann nicht antworten)",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -188,33 +199,10 @@ AVAILABLE_TOOLS = [
                     "document_types": {
                         "type": "array",
                         "items": {"type": "string"},
-                        "description": "Welche Dokumenttypen fehlen? (z.B. 'Projektplan', 'Review-Protokoll')"
+                        "description": "Welche Dokumenttypen fehlen?"
                     }
                 },
                 "required": ["document_types"]
-            }
-        }
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "next_obligation",
-            "description": "Markiert aktuelle Obligation als erfüllt (mit Coverage) und geht zur nächsten",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "coverage_percent": {
-                        "type": "number",
-                        "description": "Abdeckungsgrad 0-100",
-                        "minimum": 0,
-                        "maximum": 100
-                    },
-                    "reasoning": {
-                        "type": "string",
-                        "description": "Begründung warum Obligation erfüllt ist"
-                    }
-                },
-                "required": ["coverage_percent", "reasoning"]
             }
         }
     }
@@ -278,10 +266,14 @@ def execute_tool(tool_name: str, arguments: dict, context: dict) -> dict:
 
             if orchestrator:
                 orchestrator._mark_current_covered(coverage, reasoning)
+                # Negative Example entfernen falls vorhanden (Frage war erfolgreich)
+                if orchestrator.state.last_question_id:
+                    # Optional: Positive Example speichern
+                    pass
 
             return {
                 "success": True,
-                "result": f"Obligation als abgedeckt markiert ({coverage}%)",
+                "result": f"Obligation als abgedeckt markiert ({coverage:.0f}%): {reasoning}",
                 "action": "advance_next"
             }
 
