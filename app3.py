@@ -2087,6 +2087,19 @@ class AssessmentOrchestrator:
         # LLM mit ALLEN Tools - es entscheidet selbst
         response, tools_used, action = call_llm_with_tools(messages, context)
 
+        # Tool-Transparenz
+        if tools_used:
+            tool_names = [t.get("name", "unknown") for t in tools_used if isinstance(t, dict)]
+            if tool_names:
+                tool_indicators = {
+                    "query_evidence": "🔍 Durchsuche Dokumente...",
+                    "next_obligation": "✅ Markiere als erfüllt...",
+                    "skip_to_next": "⏭️ Überspringe..."
+                }
+                indicators = " ".join([tool_indicators.get(t, "") for t in tool_names])
+                if indicators:
+                    response = f"{indicators}\n\n{response}"
+
         # Action-basierte Rückgabe
         if action == "advance_next":
             next_obl = self._load_next_obligation()
