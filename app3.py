@@ -243,22 +243,6 @@ def execute_tool(tool_name: str, arguments: dict, context: dict) -> dict:
             except Exception as e:
                 return {"success": False, "result": f"Suche fehlgeschlagen: {e}", "action": None}
 
-        elif tool_name == "calculate_coverage":
-            proc = context.get("process_id", "")
-            prac = context.get("practice_id", "")
-            key = f"{proc}:{prac}"
-
-            coverage = st.session_state.get("obl_coverage", {}).get(key, [])
-            total = len(coverage)
-            covered = sum(1 for item in coverage if item.get("status") == "covered")
-            pct = (covered / total * 100) if total > 0 else 0
-
-            return {
-                "success": True,
-                "result": f"{covered}/{total} Obligations abgedeckt ({pct:.0f}%)",
-                "action": None
-            }
-
         elif tool_name == "next_obligation":
             coverage = arguments.get("coverage_percent", 75.0)
             reasoning = arguments.get("reasoning", "User provided sufficient evidence")
